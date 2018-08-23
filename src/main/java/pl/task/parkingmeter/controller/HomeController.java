@@ -26,16 +26,15 @@ public class HomeController {
     @Autowired
     RateRepository rateRepository;
 
-//    @GetMapping("/")
-//    public String home() {
-//        return "index";
-//    }
+    @GetMapping("")
+    public List<Vehicle> showVehicles() {
+        return vehicleRepository.findVehiclesByIsPaidFalse();
+    }
 
-    @GetMapping("/startPark")
-    public String startPark(@RequestParam String regNumber, @RequestParam(required = false) boolean disabled) {
-
+    @PostMapping("/{regNumber}")
+    public String startPark(@PathVariable String regNumber, @RequestParam(required = false) boolean disabled) {
+        
         String validRegNumber = checkRegNumber(regNumber);
-
         if (validRegNumber != null) {
             Vehicle vehicleFromDB = vehicleRepository.findVehicleByRegNumberAndIsPaidFalse(validRegNumber);
             if (vehicleFromDB == null) {
@@ -55,32 +54,23 @@ public class HomeController {
     }
 
     @GetMapping("/{regNumber}")
-    @ResponseBody
-    public Vehicle checkVehicle(@PathVariable String regNumber) {
+    public Vehicle checkBill(@PathVariable String regNumber, @RequestParam(required = false, defaultValue = "PLN") String currency) {
 
         String validRegNumber = checkRegNumber(regNumber);
-        Vehicle vehicle = new Vehicle();
+        Vehicle result = new Vehicle();
 
         if (validRegNumber != null) {
-            vehicle = vehicleRepository.findVehicleByRegNumberAndIsPaidFalse(validRegNumber);
+            Vehicle vehicle = vehicleRepository.findVehicleByRegNumberAndIsPaidFalse(validRegNumber);
+            if (vehicle != null) {
+                BigDecimal valueToPay = getValueToPay(currency, vehicle);
+                vehicle.setBill(valueToPay);
+                result = vehicle;
+            }
         }
-        return vehicle;
+        return result;
     }
-
-    @GetMapping("/checkValue")
-    @ResponseBody
-    public String checkValue(@RequestParam String regNumber, @RequestParam(required = false, defaultValue = "PLN") String currency) {
-
-        String validRegNumber = checkRegNumber(regNumber);
-        Vehicle vehicle = vehicleRepository.findVehicleByRegNumberAndIsPaidFalse(validRegNumber);
-        BigDecimal valueToPay = getValueToPay(currency, vehicle);
-
-        return valueToPay.toString();
-    }
-
 
     @GetMapping("/pay")
-    @ResponseBody
     public String pay(@RequestParam String regNumber, @RequestParam(required = false, defaultValue = "PLN") String currency) {
 
         String validRegNumber = checkRegNumber(regNumber);
@@ -114,11 +104,6 @@ public class HomeController {
             dailyProfit = dailyProfit.add(vehicle.getBill());
         }
         return "Today you earn: " + dailyProfit.toString();
-    }
-
-    @GetMapping("/vehicles")
-    public List<Vehicle> showVehicles() {
-        return vehicleRepository.findVehiclesByIsPaidFalse();
     }
 
     private String checkRegNumber(String regNumber) {
