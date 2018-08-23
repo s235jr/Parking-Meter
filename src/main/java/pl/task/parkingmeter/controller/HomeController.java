@@ -33,9 +33,11 @@ public class HomeController {
     }
 
     @PostMapping("/{regNumber}")
-    public String startPark(@PathVariable String regNumber, @RequestParam(required = false) boolean disabled) {
+    public Vehicle startPark(@PathVariable String regNumber, @RequestParam(required = false) boolean disabled) {
 
         String validRegNumber = checkRegNumber(regNumber);
+        Vehicle result = new Vehicle();
+
         if (validRegNumber != null) {
             Vehicle vehicleFromDB = vehicleRepository.findVehicleByRegNumberAndIsPaidFalse(validRegNumber);
             if (vehicleFromDB == null) {
@@ -44,14 +46,10 @@ public class HomeController {
                 vehicle.setOwnerDisabled(disabled);
                 vehicle.setCreatedDate(new Timestamp(System.currentTimeMillis()));
                 vehicleRepository.save(vehicle);
-                System.out.println("Add vehicle!");
-            } else {
-                System.out.println("Vehicle was added earlier!");
+                result = vehicle;
             }
-        } else {
-            System.out.println("Invalid regnumber!");
         }
-        return "redirect:/";
+        return result;
     }
 
     @GetMapping("/{regNumber}")
@@ -72,18 +70,19 @@ public class HomeController {
     }
 
     @DeleteMapping("/{regNumber}")
-    public void pay(@PathVariable String regNumber, @RequestParam(required = false, defaultValue = "PLN") String currency) {
+    public Vehicle pay(@PathVariable String regNumber, @RequestParam(required = false, defaultValue = "PLN") String currency) {
 
         String validRegNumber = checkRegNumber(regNumber);
+        Vehicle result = new Vehicle();
         Vehicle vehicle = vehicleRepository.findVehicleByRegNumberAndIsPaidFalse(validRegNumber);
         if (vehicle != null) {
             vehicle.setPayDate(new Timestamp(System.currentTimeMillis()));
             vehicle.setBill(getValueToPay(currency, vehicle));
             vehicle.setIsPaid(true);
             vehicleRepository.save(vehicle);
-        } else {
-            System.out.println("PAID EARLIER");
+            result = vehicle;
         }
+        return result;
     }
 
     @PutMapping("/{date}")
