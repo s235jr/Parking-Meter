@@ -2,13 +2,14 @@ package pl.task.parkingmeter.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import pl.task.parkingmeter.entity.Profit;
 import pl.task.parkingmeter.entity.Vehicle;
 import pl.task.parkingmeter.repository.RateRepository;
 import pl.task.parkingmeter.repository.VehicleRepository;
 
 import java.math.BigDecimal;
-import java.sql.Date;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
@@ -33,7 +34,7 @@ public class HomeController {
 
     @PostMapping("/{regNumber}")
     public String startPark(@PathVariable String regNumber, @RequestParam(required = false) boolean disabled) {
-        
+
         String validRegNumber = checkRegNumber(regNumber);
         if (validRegNumber != null) {
             Vehicle vehicleFromDB = vehicleRepository.findVehicleByRegNumberAndIsPaidFalse(validRegNumber);
@@ -70,8 +71,8 @@ public class HomeController {
         return result;
     }
 
-    @GetMapping("/pay")
-    public String pay(@RequestParam String regNumber, @RequestParam(required = false, defaultValue = "PLN") String currency) {
+    @DeleteMapping("/{regNumber}")
+    public void pay(@PathVariable String regNumber, @RequestParam(required = false, defaultValue = "PLN") String currency) {
 
         String validRegNumber = checkRegNumber(regNumber);
         Vehicle vehicle = vehicleRepository.findVehicleByRegNumberAndIsPaidFalse(validRegNumber);
@@ -83,27 +84,31 @@ public class HomeController {
         } else {
             System.out.println("PAID EARLIER");
         }
-        return "Paid";
     }
 
-    @GetMapping("/checkProfit")
-    @ResponseBody
-    public String checkProfit(@RequestParam Date date) {
+    @PutMapping("/{date}")
+    public Profit checkProfit(@PathVariable String date) {
 
-        LocalDateTime startLDT = LocalDateTime.of(date.toLocalDate(), LocalTime.of(0, 0, 00));
-        LocalDateTime endLDT = LocalDateTime.of(date.toLocalDate(), LocalTime.of(23, 59, 59));
+        String[] parsedDate = date.split("-");
+        LocalDate localDate = LocalDate.of(Integer.valueOf(parsedDate[0]), Integer.valueOf(parsedDate[1]), Integer.valueOf(parsedDate[2]));
 
+        LocalDateTime startLDT = LocalDateTime.of(localDate, LocalTime.of(0, 0, 00));
         Timestamp start = Timestamp.valueOf(startLDT);
+
+        LocalDateTime endLDT = LocalDateTime.of(localDate, LocalTime.of(23, 59, 59));
         Timestamp end = Timestamp.valueOf(endLDT);
 
         List<Vehicle> vehicleByPayDate = vehicleRepository.findVehiclesByPayDateBetween(start, end);
         BigDecimal dailyProfit = BigDecimal.valueOf(0);
 
         for (Vehicle vehicle : vehicleByPayDate) {
-            System.out.println(vehicle.getBill());
             dailyProfit = dailyProfit.add(vehicle.getBill());
         }
-        return "Today you earn: " + dailyProfit.toString();
+
+        Profit profit = new Profit();
+        profit.setDate(localDate);
+        profit.setValue(dailyProfit);
+        return profit;
     }
 
     private String checkRegNumber(String regNumber) {

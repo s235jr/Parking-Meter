@@ -18,7 +18,7 @@ public class Vehicle {
     @Column(name = "paydate")
     private Timestamp payDate;
     private BigDecimal bill;
-    @Column(name="disabledowner")
+    @Column(name = "disabledowner")
     private boolean isOwnerDisabled;
     @Column(name = "paid")
     private boolean isPaid;
@@ -84,6 +84,10 @@ public class Vehicle {
         return "Vehicle{" +
                 "id=" + id +
                 ", regNumber='" + regNumber + '\'' +
+                ", createdDate=" + createdDate +
+                ", payDate=" + payDate +
+                ", bill=" + bill +
+                ", isOwnerDisabled=" + isOwnerDisabled +
                 ", isPaid=" + isPaid +
                 '}';
     }

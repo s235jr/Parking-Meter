@@ -15,5 +15,4 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
 
     List<Vehicle> findVehiclesByPayDateBetween(Timestamp start, Timestamp end);
 
-
 }
