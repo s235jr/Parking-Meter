@@ -9,6 +9,7 @@ import pl.task.parkingmeter.repository.VehicleRepository;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -88,25 +89,46 @@ public class HomeController {
     @PutMapping("/{date}")
     public Profit checkProfit(@PathVariable String date) {
 
-        String[] parsedDate = date.split("-");
-        LocalDate localDate = LocalDate.of(Integer.valueOf(parsedDate[0]), Integer.valueOf(parsedDate[1]), Integer.valueOf(parsedDate[2]));
+        Profit profit = new Profit();
 
-        LocalDateTime startLDT = LocalDateTime.of(localDate, LocalTime.of(0, 0, 00));
-        Timestamp start = Timestamp.valueOf(startLDT);
-
-        LocalDateTime endLDT = LocalDateTime.of(localDate, LocalTime.of(23, 59, 59));
-        Timestamp end = Timestamp.valueOf(endLDT);
-
-        List<Vehicle> vehicleByPayDate = vehicleRepository.findVehiclesByPayDateBetween(start, end);
-        BigDecimal dailyProfit = BigDecimal.valueOf(0);
-
-        for (Vehicle vehicle : vehicleByPayDate) {
-            dailyProfit = dailyProfit.add(vehicle.getBill());
+        try {
+            profit = countProfitForDate(date);
+        } catch (DateTimeException e) {
+            System.out.println(e.getMessage());
         }
 
+        return profit;
+    }
+
+    private Profit countProfitForDate(@PathVariable String date) {
+
         Profit profit = new Profit();
-        profit.setDate(localDate);
-        profit.setValue(dailyProfit);
+        String regex = "([2][0-9]{3})-([0][1-9]|[1][0-2])-([0-2][0-9]|[3][0-1])";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(date);
+        if (matcher.matches()) {
+
+            String[] parsedDate = date.split("-");
+            LocalDate localDate = LocalDate.of(Integer.valueOf(parsedDate[0]), Integer.valueOf(parsedDate[1]), Integer.valueOf(parsedDate[2]));
+
+            LocalDateTime startLDT = LocalDateTime.of(localDate, LocalTime.of(0, 0, 00));
+            Timestamp start = Timestamp.valueOf(startLDT);
+
+            LocalDateTime endLDT = LocalDateTime.of(localDate, LocalTime.of(23, 59, 59));
+            Timestamp end = Timestamp.valueOf(endLDT);
+
+            List<Vehicle> vehicleByPayDate = vehicleRepository.findVehiclesByPayDateBetween(start, end);
+            profit.setDate(localDate);
+            if (!vehicleByPayDate.isEmpty() || vehicleByPayDate != null) {
+                BigDecimal dailyProfit = BigDecimal.valueOf(0);
+                for (Vehicle vehicle : vehicleByPayDate) {
+                    dailyProfit = dailyProfit.add(vehicle.getBill());
+                }
+                profit.setValue(dailyProfit);
+            } else {
+                profit.setValue(BigDecimal.valueOf(0));
+            }
+        }
         return profit;
     }
 
