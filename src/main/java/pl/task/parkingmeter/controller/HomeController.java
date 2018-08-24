@@ -9,7 +9,6 @@ import pl.task.parkingmeter.repository.VehicleRepository;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -22,11 +21,15 @@ import java.util.regex.Pattern;
 @RequestMapping("/vehicles")
 public class HomeController {
 
-    @Autowired
-    VehicleRepository vehicleRepository;
+    private final VehicleRepository vehicleRepository;
+    private final RateRepository rateRepository;
 
     @Autowired
-    RateRepository rateRepository;
+    HomeController(VehicleRepository vehicleRepository,
+                   RateRepository rateRepository) {
+        this.vehicleRepository = vehicleRepository;
+        this.rateRepository = rateRepository;
+    }
 
     @GetMapping("")
     public List<Vehicle> showVehicles() {
@@ -48,6 +51,8 @@ public class HomeController {
                 vehicle.setCreatedDate(new Timestamp(System.currentTimeMillis()));
                 vehicleRepository.save(vehicle);
                 result = vehicle;
+            } else {
+                throw new VehicleAddedEarlierException(validRegNumber);
             }
         }
         return result;
@@ -65,6 +70,8 @@ public class HomeController {
                 BigDecimal valueToPay = getValueToPay(currency, vehicle);
                 vehicle.setBill(valueToPay);
                 result = vehicle;
+            } else {
+                throw new VehicleNotFoundException(validRegNumber);
             }
         }
         return result;
@@ -74,7 +81,7 @@ public class HomeController {
     public Vehicle pay(@PathVariable String regNumber, @RequestParam(required = false, defaultValue = "PLN") String currency) {
 
         String validRegNumber = checkRegNumber(regNumber);
-        Vehicle result = new Vehicle();
+        Vehicle result;
         Vehicle vehicle = vehicleRepository.findVehicleByRegNumberAndIsPaidFalse(validRegNumber);
         if (vehicle != null) {
             vehicle.setPayDate(new Timestamp(System.currentTimeMillis()));
@@ -82,22 +89,16 @@ public class HomeController {
             vehicle.setIsPaid(true);
             vehicleRepository.save(vehicle);
             result = vehicle;
+        } else {
+            throw new VehicleNotFoundException(validRegNumber);
         }
         return result;
     }
 
     @PutMapping("/{date}")
-    public Profit checkProfit(@PathVariable String date) {
+    public Profit checkProfit(@PathVariable String date) throws RuntimeException {
 
-        Profit profit = new Profit();
-
-        try {
-            profit = countProfitForDate(date);
-        } catch (DateTimeException e) {
-            System.out.println(e.getMessage());
-        }
-
-        return profit;
+        return countProfitForDate(date);
     }
 
     private Profit countProfitForDate(@PathVariable String date) {
@@ -125,9 +126,9 @@ public class HomeController {
                     dailyProfit = dailyProfit.add(vehicle.getBill());
                 }
                 profit.setValue(dailyProfit);
-            } else {
-                profit.setValue(BigDecimal.valueOf(0));
             }
+        } else {
+            throw new InvalidDateException(date);
         }
         return profit;
     }

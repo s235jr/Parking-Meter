@@ -5,6 +5,7 @@ import pl.task.parkingmeter.entity.Vehicle;
 
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Optional;
 
 
 public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
