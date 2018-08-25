@@ -4,6 +4,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import pl.task.parkingmeter.entity.Profit;
 import pl.task.parkingmeter.entity.Vehicle;
+import pl.task.parkingmeter.exception.InvalidDateException;
+import pl.task.parkingmeter.exception.InvalidRegNumberException;
+import pl.task.parkingmeter.exception.VehicleAddedEarlierException;
+import pl.task.parkingmeter.exception.VehicleNotFoundException;
 import pl.task.parkingmeter.repository.RateRepository;
 import pl.task.parkingmeter.repository.VehicleRepository;
 
@@ -40,75 +44,61 @@ public class HomeController {
     public Vehicle startPark(@PathVariable String regNumber, @RequestParam(required = false) boolean disabled) {
 
         String validRegNumber = checkRegNumber(regNumber);
-        Vehicle result = new Vehicle();
+        Vehicle vehicle = vehicleRepository.findVehicleByRegNumberAndIsPaidFalse(validRegNumber).orElse(new Vehicle());
 
-        if (validRegNumber != null) {
-            Vehicle vehicleFromDB = vehicleRepository.findVehicleByRegNumberAndIsPaidFalse(validRegNumber);
-            if (vehicleFromDB == null) {
-                Vehicle vehicle = new Vehicle();
-                vehicle.setRegNumber(validRegNumber);
-                vehicle.setOwnerDisabled(disabled);
-                vehicle.setCreatedDate(new Timestamp(System.currentTimeMillis()));
-                vehicleRepository.save(vehicle);
-                result = vehicle;
-            } else {
-                throw new VehicleAddedEarlierException(validRegNumber);
-            }
+        if (vehicle.getId() == 0) {
+            vehicle.setRegNumber(validRegNumber);
+            vehicle.setOwnerDisabled(disabled);
+            vehicle.setCreatedDate(new Timestamp(System.currentTimeMillis()));
+            vehicleRepository.save(vehicle);
+        } else {
+            throw new VehicleAddedEarlierException(regNumber);
         }
-        return result;
+
+        return vehicle;
     }
 
     @GetMapping("/{regNumber}")
     public Vehicle checkBill(@PathVariable String regNumber, @RequestParam(required = false, defaultValue = "PLN") String currency) {
 
         String validRegNumber = checkRegNumber(regNumber);
-        Vehicle result = new Vehicle();
+        Vehicle vehicle = vehicleRepository.findVehicleByRegNumberAndIsPaidFalse(validRegNumber)
+                .orElseThrow(() -> new VehicleNotFoundException(validRegNumber));
 
-        if (validRegNumber != null) {
-            Vehicle vehicle = vehicleRepository.findVehicleByRegNumberAndIsPaidFalse(validRegNumber);
-            if (vehicle != null) {
-                BigDecimal valueToPay = getValueToPay(currency, vehicle);
-                vehicle.setBill(valueToPay);
-                result = vehicle;
-            } else {
-                throw new VehicleNotFoundException(validRegNumber);
-            }
+        if (vehicle != null) {
+            vehicle.setBill(getValueToPay(currency, vehicle));
         }
-        return result;
+
+        return vehicle;
     }
 
     @DeleteMapping("/{regNumber}")
     public Vehicle pay(@PathVariable String regNumber, @RequestParam(required = false, defaultValue = "PLN") String currency) {
 
         String validRegNumber = checkRegNumber(regNumber);
-        Vehicle result;
-        Vehicle vehicle = vehicleRepository.findVehicleByRegNumberAndIsPaidFalse(validRegNumber);
+        Vehicle vehicle = vehicleRepository.findVehicleByRegNumberAndIsPaidFalse(validRegNumber).orElseThrow(() -> new VehicleNotFoundException(validRegNumber));
+
         if (vehicle != null) {
             vehicle.setPayDate(new Timestamp(System.currentTimeMillis()));
             vehicle.setBill(getValueToPay(currency, vehicle));
             vehicle.setIsPaid(true);
             vehicleRepository.save(vehicle);
-            result = vehicle;
-        } else {
-            throw new VehicleNotFoundException(validRegNumber);
         }
-        return result;
+
+        return vehicle;
     }
 
     @PutMapping("/{date}")
     public Profit checkProfit(@PathVariable String date) throws RuntimeException {
-
         return countProfitForDate(date);
     }
 
     private Profit countProfitForDate(@PathVariable String date) {
-
         Profit profit = new Profit();
         String regex = "([2][0-9]{3})-([0][1-9]|[1][0-2])-([0-2][0-9]|[3][0-1])";
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(date);
         if (matcher.matches()) {
-
             String[] parsedDate = date.split("-");
             LocalDate localDate = LocalDate.of(Integer.valueOf(parsedDate[0]), Integer.valueOf(parsedDate[1]), Integer.valueOf(parsedDate[2]));
 
@@ -136,14 +126,14 @@ public class HomeController {
     private String checkRegNumber(String regNumber) {
 
         regNumber = regNumber.replaceAll(" ", "").toUpperCase();
-        String regex = "[A-Z0-9]*";
+        String regex = "[A-Z0-9]{3,}";
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(regNumber);
 
         if (matcher.matches()) {
             return regNumber;
         } else {
-            return null;
+            throw new InvalidRegNumberException(regNumber);
         }
     }
 

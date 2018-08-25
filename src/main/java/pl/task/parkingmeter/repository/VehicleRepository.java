@@ -12,7 +12,7 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
 
     List<Vehicle> findVehiclesByIsPaidFalse();
 
-    Vehicle findVehicleByRegNumberAndIsPaidFalse(String regNumber);
+    Optional<Vehicle> findVehicleByRegNumberAndIsPaidFalse(String regNumber);
 
     List<Vehicle> findVehiclesByPayDateBetween(Timestamp start, Timestamp end);
 
