@@ -3,12 +3,12 @@ package pl.task.parkingmeter.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import pl.task.parkingmeter.entity.Profit;
+import pl.task.parkingmeter.entity.Rates;
 import pl.task.parkingmeter.entity.Vehicle;
 import pl.task.parkingmeter.exception.InvalidDateException;
 import pl.task.parkingmeter.exception.InvalidRegNumberException;
 import pl.task.parkingmeter.exception.VehicleAddedEarlierException;
 import pl.task.parkingmeter.exception.VehicleNotFoundException;
-import pl.task.parkingmeter.repository.RateRepository;
 import pl.task.parkingmeter.repository.VehicleRepository;
 
 import java.math.BigDecimal;
@@ -26,13 +26,10 @@ import java.util.regex.Pattern;
 public class HomeController {
 
     private final VehicleRepository vehicleRepository;
-    private final RateRepository rateRepository;
 
     @Autowired
-    HomeController(VehicleRepository vehicleRepository,
-                   RateRepository rateRepository) {
+    HomeController(VehicleRepository vehicleRepository) {
         this.vehicleRepository = vehicleRepository;
-        this.rateRepository = rateRepository;
     }
 
     @GetMapping("")
@@ -157,7 +154,11 @@ public class HomeController {
             } else {
                 type = "regular";
             }
-            valueToPay = rateRepository.findRateByHoursAndTypeAndCurrency(hours, type, currency).getSumToThisHour();
+
+            List<Rates> ratesList = Rates.getRatesList();
+            Rates ratesHours = ratesList.stream().filter(rates -> rates.getType()
+                    .equals(type) && rates.getCurrency().equals(currency)).findFirst().get();
+            valueToPay = ratesHours.getRates().get((int) hours);
         }
         return valueToPay;
     }
