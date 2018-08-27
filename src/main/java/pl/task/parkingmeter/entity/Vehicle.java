@@ -1,8 +1,11 @@
 package pl.task.parkingmeter.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "vehicles")
@@ -13,15 +16,24 @@ public class Vehicle {
     private long id;
     @Column(name = "regnumber")
     private String regNumber;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
     @Column(name = "createddate")
-    private Timestamp createdDate;
+    private LocalDateTime createdDate;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
     @Column(name = "paydate")
-    private Timestamp payDate;
+    private LocalDateTime payDate;
     private BigDecimal bill;
     @Column(name = "disabledowner")
     private boolean isOwnerDisabled;
     @Column(name = "paid")
     private boolean isPaid;
+
+    public Vehicle (String regNumber) {
+        this.regNumber = regNumber;
+    }
+
+    public Vehicle() {
+    }
 
     public long getId() {
         return id;
@@ -39,19 +51,19 @@ public class Vehicle {
         this.regNumber = regNumber;
     }
 
-    public Timestamp getCreatedDate() {
+    public LocalDateTime getCreatedDate() {
         return createdDate;
     }
 
-    public void setCreatedDate(Timestamp createdDate) {
+    public void setCreatedDate(LocalDateTime createdDate) {
         this.createdDate = createdDate;
     }
 
-    public Timestamp getPayDate() {
+    public LocalDateTime getPayDate() {
         return payDate;
     }
 
-    public void setPayDate(Timestamp payDate) {
+    public void setPayDate(LocalDateTime payDate) {
         this.payDate = payDate;
     }
 

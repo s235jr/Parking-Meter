@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
-import pl.task.parkingmeter.entity.Rates;
+import pl.task.parkingmeter.entity.Rate;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -14,18 +14,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 @SpringBootApplication
-public class ParkingmeterApplication {
+public class Application {
 
     public static void main(String[] args) {
-        SpringApplication.run(ParkingmeterApplication.class, args);
+        SpringApplication.run(Application.class, args);
 
         createRates();
 
+
+
     }
 
-    private static void createRates() {
+    public static void createRates() {
 
-        Rates regPLN = new Rates();
+        Rate regPLN = new Rate();
         regPLN.setType("regular");
         regPLN.setCurrency("PLN");
         Map<Integer, BigDecimal> valueOfEachHours = new HashMap<>();
@@ -41,9 +43,9 @@ public class ParkingmeterApplication {
             regularPLN.put(i, regularPLN.get(i - 1).add(valueOfEachHours.get(i)).setScale(2, RoundingMode.CEILING));
         }
         regPLN.setRates(regularPLN);
-        Rates.addToRatesList(regPLN);
+        Rate.addToRatesList(regPLN);
 
-        Rates disPLN = new Rates();
+        Rate disPLN = new Rate();
         disPLN.setType("disabled");
         disPLN.setCurrency("PLN");
         valueOfEachHours = new HashMap<>();
@@ -60,7 +62,7 @@ public class ParkingmeterApplication {
             disabledPLN.put(i, disabledPLN.get(i - 1).add(valueOfEachHours.get(i)).setScale(2, RoundingMode.CEILING));
         }
         disPLN.setRates(disabledPLN);
-        Rates.addToRatesList(disPLN);
+        Rate.addToRatesList(disPLN);
     }
 
     @Bean

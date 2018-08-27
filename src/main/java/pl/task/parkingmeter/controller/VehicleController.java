@@ -2,20 +2,19 @@ package pl.task.parkingmeter.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import pl.task.parkingmeter.entity.Profit;
-import pl.task.parkingmeter.entity.Rates;
+import pl.task.parkingmeter.entity.Rate;
 import pl.task.parkingmeter.entity.Vehicle;
 import pl.task.parkingmeter.exception.InvalidDateException;
 import pl.task.parkingmeter.exception.InvalidRegNumberException;
 import pl.task.parkingmeter.exception.VehicleAddedEarlierException;
 import pl.task.parkingmeter.exception.VehicleNotFoundException;
-import pl.task.parkingmeter.repository.VehicleRepository;
+import pl.task.parkingmeter.repository.VehicleService;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -23,31 +22,33 @@ import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping("/vehicles")
-public class HomeController {
+@EnableWebMvc
+public class VehicleController {
 
-    private final VehicleRepository vehicleRepository;
+    private VehicleService service;
 
     @Autowired
-    HomeController(VehicleRepository vehicleRepository) {
-        this.vehicleRepository = vehicleRepository;
+    public VehicleController(VehicleService vehicleService) {
+        this.service = vehicleService;
     }
 
+
     @GetMapping("")
-    public List<Vehicle> showVehicles() {
-        return vehicleRepository.findVehiclesByIsPaidFalse();
+    public List<Vehicle> showAllVehicles() {
+        return service.findVehiclesByIsPaidFalse();
     }
 
     @PostMapping("/{regNumber}")
-    public Vehicle startPark(@PathVariable String regNumber, @RequestParam(required = false) boolean disabled) {
+    public Vehicle runParkMeter(@PathVariable String regNumber, @RequestParam(required = false) boolean disabled) {
 
         String validRegNumber = checkRegNumber(regNumber);
-        Vehicle vehicle = vehicleRepository.findVehicleByRegNumberAndIsPaidFalse(validRegNumber).orElse(new Vehicle());
+        Vehicle vehicle = service.findVehicleByRegNumberAndIsPaidFalse(validRegNumber).orElse(new Vehicle());
 
         if (vehicle.getId() == 0) {
             vehicle.setRegNumber(validRegNumber);
             vehicle.setOwnerDisabled(disabled);
-            vehicle.setCreatedDate(new Timestamp(System.currentTimeMillis()));
-            vehicleRepository.save(vehicle);
+            vehicle.setCreatedDate(LocalDateTime.now());
+            service.addVehicle(vehicle);
         } else {
             throw new VehicleAddedEarlierException(regNumber);
         }
@@ -59,10 +60,11 @@ public class HomeController {
     public Vehicle checkBill(@PathVariable String regNumber, @RequestParam(required = false, defaultValue = "PLN") String currency) {
 
         String validRegNumber = checkRegNumber(regNumber);
-        Vehicle vehicle = vehicleRepository.findVehicleByRegNumberAndIsPaidFalse(validRegNumber)
+        Vehicle vehicle = service.findVehicleByRegNumberAndIsPaidFalse(validRegNumber)
                 .orElseThrow(() -> new VehicleNotFoundException(validRegNumber));
 
         if (vehicle != null) {
+
             vehicle.setBill(getValueToPay(currency, vehicle));
         }
 
@@ -73,13 +75,13 @@ public class HomeController {
     public Vehicle pay(@PathVariable String regNumber, @RequestParam(required = false, defaultValue = "PLN") String currency) {
 
         String validRegNumber = checkRegNumber(regNumber);
-        Vehicle vehicle = vehicleRepository.findVehicleByRegNumberAndIsPaidFalse(validRegNumber).orElseThrow(() -> new VehicleNotFoundException(validRegNumber));
+        Vehicle vehicle = service.findVehicleByRegNumberAndIsPaidFalse(validRegNumber).orElseThrow(() -> new VehicleNotFoundException(validRegNumber));
 
         if (vehicle != null) {
-            vehicle.setPayDate(new Timestamp(System.currentTimeMillis()));
+            vehicle.setPayDate(LocalDateTime.now());
             vehicle.setBill(getValueToPay(currency, vehicle));
             vehicle.setIsPaid(true);
-            vehicleRepository.save(vehicle);
+            service.addVehicle(vehicle);
         }
 
         return vehicle;
@@ -97,16 +99,15 @@ public class HomeController {
         Matcher matcher = pattern.matcher(date);
         if (matcher.matches()) {
             String[] parsedDate = date.split("-");
-            LocalDate localDate = LocalDate.of(Integer.valueOf(parsedDate[0]), Integer.valueOf(parsedDate[1]), Integer.valueOf(parsedDate[2]));
 
-            LocalDateTime startLDT = LocalDateTime.of(localDate, LocalTime.of(0, 0, 00));
-            Timestamp start = Timestamp.valueOf(startLDT);
+            LocalDateTime startDate = LocalDateTime
+                    .of(Integer.valueOf(parsedDate[0]), Integer.valueOf(parsedDate[1]), Integer.valueOf(parsedDate[2]), 0, 0, 0);
 
-            LocalDateTime endLDT = LocalDateTime.of(localDate, LocalTime.of(23, 59, 59));
-            Timestamp end = Timestamp.valueOf(endLDT);
+            LocalDateTime endDate = LocalDateTime
+                    .of(Integer.valueOf(parsedDate[0]), Integer.valueOf(parsedDate[1]), Integer.valueOf(parsedDate[2]), 23, 59, 59);
 
-            List<Vehicle> vehicleByPayDate = vehicleRepository.findVehiclesByPayDateBetween(start, end);
-            profit.setDate(localDate);
+            List<Vehicle> vehicleByPayDate = service.findVehiclesByPayDateBetween(startDate, endDate);
+            profit.setDate(startDate.toLocalDate());
             if (!vehicleByPayDate.isEmpty() || vehicleByPayDate != null) {
                 BigDecimal dailyProfit = BigDecimal.valueOf(0);
                 for (Vehicle vehicle : vehicleByPayDate) {
@@ -134,15 +135,18 @@ public class HomeController {
         }
     }
 
-    private long checkHours(Timestamp createdDate) {
+    private long checkHours(LocalDateTime createdDate) {
 
+        LocalDateTime startTime = createdDate;
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-        LocalDateTime startTime = createdDate.toLocalDateTime();
         LocalDateTime actualTime = timestamp.toLocalDateTime();
+
         return ChronoUnit.HOURS.between(startTime, actualTime) + 1;
     }
 
-    private BigDecimal getValueToPay(@RequestParam(required = false, defaultValue = "PLN") String currency, Vehicle vehicle) {
+    private BigDecimal getValueToPay(String currency, Vehicle vehicle) {
+
+
         long hours = checkHours(vehicle.getCreatedDate());
         BigDecimal valueToPay;
         if (hours > 24) {
@@ -155,11 +159,17 @@ public class HomeController {
                 type = "regular";
             }
 
-            List<Rates> ratesList = Rates.getRatesList();
-            Rates ratesHours = ratesList.stream().filter(rates -> rates.getType()
+
+            List<Rate> ratesList = Rate.getRatesList();
+
+            System.out.println("HHHHHHHHHHHHHHHHHHHHHHHH" + ratesList);
+
+            Rate ratesHours = ratesList.stream().filter(rates -> rates.getType()
                     .equals(type) && rates.getCurrency().equals(currency)).findFirst().get();
+
             valueToPay = ratesHours.getRates().get((int) hours);
         }
         return valueToPay;
     }
+
 }

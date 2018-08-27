@@ -1,13 +1,16 @@
 package pl.task.parkingmeter.entity;
 
+import org.springframework.stereotype.Component;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class Rates {
+@Component
+public class Rate {
 
-    private static List<Rates> ratesList = new ArrayList<>();
+    private static List<Rate> ratesList = new ArrayList<>();
     private String currency;
     private String type;
     private Map<Integer, BigDecimal> rates;
@@ -36,11 +39,11 @@ public class Rates {
         this.rates = rates;
     }
 
-    public static void addToRatesList(Rates rates) {
+    public static void addToRatesList(Rate rates) {
         ratesList.add(rates);
     }
 
-    public static List<Rates> getRatesList() {
+    public static List<Rate> getRatesList() {
         return ratesList;
     }
 
