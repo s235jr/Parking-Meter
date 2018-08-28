@@ -24,7 +24,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @RestController
-@RequestMapping("/vehicles")
+@RequestMapping("/")
 @EnableWebMvc
 public class VehicleController {
 
@@ -45,7 +45,7 @@ public class VehicleController {
         return vehicleService.findVehiclesByPaidFalse();
     }
 
-    @PostMapping("/{regNumber}")
+    @PostMapping("{regNumber}")
     public Vehicle runParkMeter(@PathVariable String regNumber, @RequestParam(required = false) boolean disabled) {
 
         String validRegNumber = checkRegNumber(regNumber);
@@ -63,7 +63,7 @@ public class VehicleController {
         return vehicle;
     }
 
-    @GetMapping("/{regNumber}")
+    @GetMapping("{regNumber}")
     public Vehicle checkBill(@PathVariable String regNumber, @RequestParam(required = false, defaultValue = "PLN") String currency) {
 
         String validRegNumber = checkRegNumber(regNumber);
@@ -78,7 +78,7 @@ public class VehicleController {
         return vehicle;
     }
 
-    @DeleteMapping("/{regNumber}")
+    @DeleteMapping("{regNumber}")
     public Vehicle pay(@PathVariable String regNumber, @RequestParam(required = false, defaultValue = "PLN") String currency) {
 
         String validRegNumber = checkRegNumber(regNumber);
@@ -95,7 +95,7 @@ public class VehicleController {
         return vehicle;
     }
 
-    @PutMapping("/{date}")
+    @PutMapping("{date}")
     public List<Profit> checkProfit(@PathVariable String date) throws RuntimeException {
         return countProfitForDate(date);
     }

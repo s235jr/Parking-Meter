@@ -78,9 +78,12 @@ public class VehicleControllerTest {
 
         when(this.vehicleService.findVehiclesByPaidFalse()).thenReturn(vehicles);
 
-        mockMvc.perform(get("/vehicles"))
+        mockMvc.perform(get("/"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(contentType))
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].regNumber").value(REG_NUMBER))
+                .andExpect(jsonPath("$[1].regNumber").value(REG_NUMBER_2))
                 .andDo(print());
     }
 
@@ -93,7 +96,7 @@ public class VehicleControllerTest {
 
         when(this.vehicleService.findVehicleByRegNumberAndPaidFalse(REG_NUMBER)).thenReturn(java.util.Optional.of(vehicle));
 
-        mockMvc.perform(post("/vehicles/{regNumber}", REG_NUMBER))
+        mockMvc.perform(post("/{regNumber}", REG_NUMBER))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.regNumber").value(REG_NUMBER))
                 .andExpect(jsonPath("$.ownerDisabled").value(false))
@@ -109,7 +112,7 @@ public class VehicleControllerTest {
 
         when(this.vehicleService.findVehicleByRegNumberAndPaidFalse(REG_NUMBER)).thenReturn(java.util.Optional.of(vehicle));
 
-        mockMvc.perform(post("/vehicles/{regNumber}?disabled=true", REG_NUMBER))
+        mockMvc.perform(post("/{regNumber}?disabled=true", REG_NUMBER))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.regNumber").value(REG_NUMBER))
                 .andExpect(jsonPath("$.ownerDisabled").value(true))
@@ -125,7 +128,7 @@ public class VehicleControllerTest {
 
         when(this.vehicleService.findVehicleByRegNumberAndPaidFalse(REG_NUMBER)).thenReturn(java.util.Optional.of(vehicle));
 
-        mockMvc.perform(post("/vehicles/{regNumber}", REG_NUMBER))
+        mockMvc.perform(post("/{regNumber}", REG_NUMBER))
                 .andExpect(status().is4xxClientError())
                 .andExpect(status().reason("Vehicle was added earlier!"))
                 .andDo(print());
@@ -136,7 +139,7 @@ public class VehicleControllerTest {
 
         String invalidRegNumber = "ASD###";
 
-        mockMvc.perform(post("/vehicles/{regNumber}", invalidRegNumber))
+        mockMvc.perform(post("/{regNumber}", invalidRegNumber))
                 .andExpect(status().is4xxClientError())
                 .andExpect(status().reason("Invalid registration number!"))
                 .andDo(print());
@@ -168,7 +171,7 @@ public class VehicleControllerTest {
 
         when(this.valueRateService.findValueRateByHoursAndRatesId(5, regularPLN)).thenReturn(valueRate);
 
-        mockMvc.perform(get("/vehicles/{regNumber}?currency=PLN", REG_NUMBER))
+        mockMvc.perform(get("/{regNumber}?currency=PLN", REG_NUMBER))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.regNumber").value(REG_NUMBER))
                 .andExpect(jsonPath("$.bill").value(valueRate.getValue())).andExpect(jsonPath("$.regNumber").value(REG_NUMBER))
@@ -204,7 +207,7 @@ public class VehicleControllerTest {
 
         when(this.valueRateService.findValueRateByHoursAndRatesId(5, regularEUR)).thenReturn(valueRate);
 
-        mockMvc.perform(get("/vehicles/{regNumber}?currency=EUR", REG_NUMBER))
+        mockMvc.perform(get("/{regNumber}?currency=EUR", REG_NUMBER))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.regNumber").value(REG_NUMBER))
                 .andExpect(jsonPath("$.bill").value(valueRate.getValue())).andExpect(jsonPath("$.regNumber").value(REG_NUMBER))
@@ -220,7 +223,7 @@ public class VehicleControllerTest {
 
         when(this.vehicleService.findVehicleByRegNumberAndPaidFalse(REG_NUMBER)).thenReturn(java.util.Optional.ofNullable(null));
 
-        mockMvc.perform(get("/vehicles/{regNumber}?currency=PLN", REG_NUMBER))
+        mockMvc.perform(get("/{regNumber}?currency=PLN", REG_NUMBER))
                 .andExpect(status().is4xxClientError())
                 .andExpect(status().reason("Vehicle not found!"))
                 .andDo(print());
@@ -232,7 +235,7 @@ public class VehicleControllerTest {
 
         String invalidRegNumber = "RTY^^&";
 
-        mockMvc.perform(get("/vehicles/{regNumber}", invalidRegNumber))
+        mockMvc.perform(get("/{regNumber}", invalidRegNumber))
                 .andExpect(status().is4xxClientError())
                 .andExpect(status().reason("Invalid registration number!"))
                 .andDo(print());
@@ -264,7 +267,7 @@ public class VehicleControllerTest {
 
         when(this.valueRateService.findValueRateByHoursAndRatesId(5, regularPLN)).thenReturn(valueRate);
 
-        mockMvc.perform(delete("/vehicles/{regNumber}", REG_NUMBER))
+        mockMvc.perform(delete("/{regNumber}", REG_NUMBER))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.regNumber").value(REG_NUMBER))
                 .andExpect(jsonPath("$.bill").value(valueRate.getValue())).andExpect(jsonPath("$.regNumber").value(REG_NUMBER))
@@ -298,7 +301,7 @@ public class VehicleControllerTest {
 
         when(this.valueRateService.findValueRateByHoursAndRatesId(5, regularPLN)).thenReturn(valueRate);
 
-        mockMvc.perform(delete("/vehicles/{regNumber}?currency=EUR", REG_NUMBER))
+        mockMvc.perform(delete("/{regNumber}?currency=EUR", REG_NUMBER))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.regNumber").value(REG_NUMBER))
                 .andExpect(jsonPath("$.bill").value(valueRate.getValue())).andExpect(jsonPath("$.regNumber").value(REG_NUMBER))
@@ -312,7 +315,7 @@ public class VehicleControllerTest {
 
         when(this.vehicleService.findVehicleByRegNumberAndPaidFalse(REG_NUMBER)).thenReturn(java.util.Optional.ofNullable(null));
 
-        mockMvc.perform(delete("/vehicles/{regNumber}", REG_NUMBER))
+        mockMvc.perform(delete("/{regNumber}", REG_NUMBER))
                 .andExpect(status().is4xxClientError())
                 .andExpect(status().reason("Vehicle not found!"))
                 .andDo(print());
@@ -353,7 +356,7 @@ public class VehicleControllerTest {
         when(this.vehicleService.findVehiclesByPayDateBetweenAndCurrency(startDate, endDate, "EUR")).thenReturn(listVehiclePaidByEUR);
         when(this.vehicleService.findVehiclesByPayDateBetweenAndCurrency(startDate, endDate, "USD")).thenReturn(listVehiclePaidByUSD);
 
-        mockMvc.perform(put("/vehicles/{date}", date))
+        mockMvc.perform(put("/{date}", date))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(contentType))
                 .andExpect(jsonPath("$", hasSize(3)))
@@ -371,7 +374,7 @@ public class VehicleControllerTest {
 
         String date = "2018-38-28";
 
-        mockMvc.perform(put("/vehicles/{date}", date))
+        mockMvc.perform(put("/{date}", date))
                 .andExpect(status().is4xxClientError())
                 .andExpect(status().reason("Invalid date format!"))
                 .andDo(print());
