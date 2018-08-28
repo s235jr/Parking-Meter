@@ -67,8 +67,6 @@ public class VehicleController {
         Vehicle vehicle = vehicleService.findVehicleByRegNumberAndPaidFalse(validRegNumber)
                 .orElseThrow(() -> new VehicleNotFoundException(validRegNumber));
 
-        System.out.println(vehicle);
-
         if (vehicle != null) {
 
             vehicle.setBill(getValueToPay(currency, vehicle));
@@ -77,23 +75,24 @@ public class VehicleController {
         return vehicle;
     }
 
+
+    @DeleteMapping("/{regNumber}")
+    public Vehicle pay(@PathVariable String regNumber, @RequestParam(required = false, defaultValue = "PLN") String currency) {
+
+        String validRegNumber = checkRegNumber(regNumber);
+        Vehicle vehicle = vehicleService.findVehicleByRegNumberAndPaidFalse(validRegNumber).orElseThrow(() -> new VehicleNotFoundException(validRegNumber));
+
+        if (vehicle != null) {
+            vehicle.setPayDate(LocalDateTime.now());
+            vehicle.setBill(getValueToPay(currency, vehicle));
+            vehicle.setIsPaid(true);
+            vehicleService.addVehicle(vehicle);
+        }
+
+        return vehicle;
+    }
+
     //
-//    @DeleteMapping("/{regNumber}")
-//    public Vehicle pay(@PathVariable String regNumber, @RequestParam(required = false, defaultValue = "PLN") String currency) {
-//
-//        String validRegNumber = checkRegNumber(regNumber);
-//        Vehicle vehicle = vehicleService.findVehicleByRegNumberAndIsPaidFalse(validRegNumber).orElseThrow(() -> new VehicleNotFoundException(validRegNumber));
-//
-//        if (vehicle != null) {
-//            vehicle.setPayDate(LocalDateTime.now());
-//            vehicle.setBill(getValueToPay(currency, vehicle));
-//            vehicle.setIsPaid(true);
-//            vehicleService.addVehicle(vehicle);
-//        }
-//
-//        return vehicle;
-//    }
-//
 //    @PutMapping("/{date}")
 //    public Profit checkProfit(@PathVariable String date) throws RuntimeException {
 //        return countProfitForDate(date);
@@ -166,14 +165,8 @@ public class VehicleController {
             }
 
             Rates rates = ratesService.findRatesByTypeAndCurrency(type, currency);
-
-            System.out.println("RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR" + rates + "hours" + hours);
-
-
-
             valueToPay = valueRateService.findValueRateByHoursAndRatesId(hours, rates).getValue();
 
-            System.out.println("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEe" + valueToPay);
         }
         return valueToPay;
     }

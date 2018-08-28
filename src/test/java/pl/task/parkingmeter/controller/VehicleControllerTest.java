@@ -26,11 +26,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 
@@ -179,5 +178,112 @@ public class VehicleControllerTest {
                 .andDo(print());
 
     }
+
+    @Test
+    public void getInfoAboutVehicleButVehicleNotFound() throws Exception {
+
+        when(this.vehicleService.findVehicleByRegNumberAndPaidFalse(REG_NUMBER)).thenReturn(java.util.Optional.ofNullable(null));
+
+        mockMvc.perform(get("/vehicles/{regNumber}?currency=PLN", REG_NUMBER))
+                .andExpect(status().is4xxClientError())
+                .andExpect(status().reason("Vehicle not found!"))
+                .andDo(print());
+
+    }
+
+    @Test
+    public void getInfoAboutVehicleButInvalidRegNumber() throws Exception {
+
+        String invalidRegNumber = "RTY^^&";
+
+        mockMvc.perform(get("/vehicles/{regNumber}", invalidRegNumber))
+                .andExpect(status().is4xxClientError())
+                .andExpect(status().reason("Invalid registration number!"))
+                .andDo(print());
+
+    }
+
+    @Test
+    public void payForParkingWhenOk() throws Exception {
+
+        Vehicle vehicle = new Vehicle();
+        vehicle.setRegNumber(REG_NUMBER);
+        vehicle.setRunDate(LocalDateTime.now().minusHours(4).minusMinutes(30));
+        vehicle.setOwnerDisabled(false);
+        vehicle.setIsPaid(false);
+
+        Rates regularPLN = new Rates();
+        regularPLN.setCurrency("PLN");
+        regularPLN.setType("regular");
+
+        ValueRate valueRate = new ValueRate();
+        valueRate.setRates(regularPLN);
+        valueRate.setHours(7);
+        valueRate.setValue(BigDecimal.valueOf(25));
+        valueRate.setRates(regularPLN);
+
+        when(this.vehicleService.findVehicleByRegNumberAndPaidFalse(REG_NUMBER)).thenReturn(java.util.Optional.ofNullable(vehicle));
+
+        when(this.ratesService.findRatesByTypeAndCurrency("regular", "PLN")).thenReturn(regularPLN);
+
+        when(this.valueRateService.findValueRateByHoursAndRatesId(5, regularPLN)).thenReturn(valueRate);
+
+        mockMvc.perform(delete("/vehicles/{regNumber}", REG_NUMBER))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.regNumber").value(REG_NUMBER))
+                .andExpect(jsonPath("$.bill").value(valueRate.getValue())).andExpect(jsonPath("$.regNumber").value(REG_NUMBER))
+                .andExpect(jsonPath("$.paid").value(true))
+                .andExpect(jsonPath("$.payDate").isNotEmpty())
+                .andDo(print());
+    }
+
+    @Test
+    public void payForParkingWhenOkAndNotDefaultCurrency() throws Exception {
+
+        Vehicle vehicle = new Vehicle();
+        vehicle.setRegNumber(REG_NUMBER);
+        vehicle.setRunDate(LocalDateTime.now().minusHours(4).minusMinutes(30));
+        vehicle.setOwnerDisabled(false);
+        vehicle.setIsPaid(false);
+
+        Rates regularPLN = new Rates();
+        regularPLN.setCurrency("EUR");
+        regularPLN.setType("regular");
+
+        ValueRate valueRate = new ValueRate();
+        valueRate.setRates(regularPLN);
+        valueRate.setHours(7);
+        valueRate.setValue(BigDecimal.valueOf(4));
+        valueRate.setRates(regularPLN);
+
+        when(this.vehicleService.findVehicleByRegNumberAndPaidFalse(REG_NUMBER)).thenReturn(java.util.Optional.ofNullable(vehicle));
+
+        when(this.ratesService.findRatesByTypeAndCurrency("regular", "EUR")).thenReturn(regularPLN);
+
+        when(this.valueRateService.findValueRateByHoursAndRatesId(5, regularPLN)).thenReturn(valueRate);
+
+        mockMvc.perform(delete("/vehicles/{regNumber}?currency=EUR", REG_NUMBER))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.regNumber").value(REG_NUMBER))
+                .andExpect(jsonPath("$.bill").value(valueRate.getValue())).andExpect(jsonPath("$.regNumber").value(REG_NUMBER))
+                .andExpect(jsonPath("$.paid").value(true))
+                .andExpect(jsonPath("$.payDate").isNotEmpty())
+                .andDo(print());
+    }
+
+    @Test
+    public void payForParkingButVehicleNotFound() throws Exception {
+
+        when(this.vehicleService.findVehicleByRegNumberAndPaidFalse(REG_NUMBER)).thenReturn(java.util.Optional.ofNullable(null));
+
+        mockMvc.perform(delete("/vehicles/{regNumber}", REG_NUMBER))
+                .andExpect(status().is4xxClientError())
+                .andExpect(status().reason("Vehicle not found!"))
+                .andDo(print());
+    }
+
+
+
+
 
 }
