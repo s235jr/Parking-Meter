@@ -56,7 +56,7 @@ public class VehicleRepositoryTest {
 
     @Test
     public void findVehiclesByIsPaidFalse() {
-        List<Vehicle> result = vehicleRepository.findVehiclesByIsPaidFalse();
+        List<Vehicle> result = vehicleRepository.findVehiclesByPaidFalse();
         assertEquals(2, result.size());
         assertEquals(REG_NUMBER_FOR_REGULAR, result.get(0).getRegNumber());
         assertEquals(REG_NUMBER_FOR_DISABLED, result.get(1).getRegNumber());
@@ -65,10 +65,10 @@ public class VehicleRepositoryTest {
     @Test
     public void findVehicleByRegNumberAndIsPaidFalse() {
 
-        Optional<Vehicle> resultForRegular = vehicleRepository.findVehicleByRegNumberAndIsPaidFalse(REG_NUMBER_FOR_REGULAR);
+        Optional<Vehicle> resultForRegular = vehicleRepository.findVehicleByRegNumberAndPaidFalse(REG_NUMBER_FOR_REGULAR);
         assertEquals(REG_NUMBER_FOR_REGULAR, resultForRegular.get().getRegNumber());
 
-        Optional<Vehicle> resultForPaidEarlier = vehicleRepository.findVehicleByRegNumberAndIsPaidFalse(REG_NUMBER_FOR_PAID_EARLIER);
+        Optional<Vehicle> resultForPaidEarlier = vehicleRepository.findVehicleByRegNumberAndPaidFalse(REG_NUMBER_FOR_PAID_EARLIER);
         assertEquals("Optional.empty", resultForPaidEarlier.toString());
 
     }

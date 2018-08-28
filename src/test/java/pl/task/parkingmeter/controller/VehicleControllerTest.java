@@ -12,9 +12,14 @@ import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+import pl.task.parkingmeter.entity.Rates;
+import pl.task.parkingmeter.entity.ValueRate;
 import pl.task.parkingmeter.entity.Vehicle;
+import pl.task.parkingmeter.repository.RatesService;
+import pl.task.parkingmeter.repository.ValueRateService;
 import pl.task.parkingmeter.repository.VehicleService;
 
+import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -24,6 +29,8 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 
@@ -40,7 +47,13 @@ public class VehicleControllerTest {
             Charset.forName("utf8"));
 
     @MockBean
-    private VehicleService service;
+    private VehicleService vehicleService;
+
+    @MockBean
+    private RatesService ratesService;
+
+    @MockBean
+    private ValueRateService valueRateService;
 
     @Autowired
     WebApplicationContext webApplicationContext;
@@ -65,7 +78,7 @@ public class VehicleControllerTest {
 
         List<Vehicle> vehicles = Arrays.asList(vehicle, vehicle_2);
 
-        when(this.service.findVehiclesByIsPaidFalse()).thenReturn(vehicles);
+        when(this.vehicleService.findVehiclesByPaidFalse()).thenReturn(vehicles);
 
         mockMvc.perform(get("/vehicles"))
                 .andExpect(status().isOk())
@@ -80,7 +93,7 @@ public class VehicleControllerTest {
         vehicle.setRegNumber(REG_NUMBER);
         vehicle.setId(0);
 
-        when(this.service.findVehicleByRegNumberAndIsPaidFalse(REG_NUMBER)).thenReturn(java.util.Optional.of(vehicle));
+        when(this.vehicleService.findVehicleByRegNumberAndPaidFalse(REG_NUMBER)).thenReturn(java.util.Optional.of(vehicle));
 
         mockMvc.perform(post("/vehicles/{regNumber}", REG_NUMBER))
                 .andExpect(status().isOk())
@@ -96,7 +109,7 @@ public class VehicleControllerTest {
         vehicle.setRegNumber(REG_NUMBER);
         vehicle.setId(0);
 
-        when(this.service.findVehicleByRegNumberAndIsPaidFalse(REG_NUMBER)).thenReturn(java.util.Optional.of(vehicle));
+        when(this.vehicleService.findVehicleByRegNumberAndPaidFalse(REG_NUMBER)).thenReturn(java.util.Optional.of(vehicle));
 
         mockMvc.perform(post("/vehicles/{regNumber}?disabled=true", REG_NUMBER))
                 .andExpect(status().isOk())
@@ -112,7 +125,7 @@ public class VehicleControllerTest {
         vehicle.setRegNumber(REG_NUMBER);
         vehicle.setId(1);
 
-        when(this.service.findVehicleByRegNumberAndIsPaidFalse(REG_NUMBER)).thenReturn(java.util.Optional.of(vehicle));
+        when(this.vehicleService.findVehicleByRegNumberAndPaidFalse(REG_NUMBER)).thenReturn(java.util.Optional.of(vehicle));
 
         mockMvc.perform(post("/vehicles/{regNumber}", REG_NUMBER))
                 .andExpect(status().is4xxClientError())
@@ -135,21 +148,35 @@ public class VehicleControllerTest {
     @Test
     public void getInfoAboutVehicleWhenOk() throws Exception {
 
-//        Application.createRates();
-//        List<Rate> ratesList = Rate.getRatesList();
-//        when(Rate.getRatesList()).thenReturn(ratesList);
-//
         Vehicle vehicle = new Vehicle();
         vehicle.setRegNumber(REG_NUMBER);
-        vehicle.setCreatedDate(LocalDateTime.now());
+        vehicle.setRunDate(LocalDateTime.now().minusHours(4).minusMinutes(30));
         vehicle.setOwnerDisabled(false);
+        vehicle.setIsPaid(false);
 
+        Rates regularPLN = new Rates();
+        regularPLN.setCurrency("PLN");
+        regularPLN.setType("regular");
 
-        when(this.service.findVehicleByRegNumberAndIsPaidFalse(REG_NUMBER)).thenReturn(java.util.Optional.ofNullable(vehicle));
+        ValueRate valueRate = new ValueRate();
+        valueRate.setRates(regularPLN);
+        valueRate.setHours(5);
+        valueRate.setValue(BigDecimal.valueOf(17.25));
+        valueRate.setRates(regularPLN);
 
-//        mockMvc.perform(get("/vehicles/{regNumber}?currency=PLN", REG_NUMBER))
-//                .andExpect(status().isOk())
-//                .andDo(print());
+        when(this.vehicleService.findVehicleByRegNumberAndPaidFalse(REG_NUMBER)).thenReturn(java.util.Optional.ofNullable(vehicle));
+
+        when(this.ratesService.findRatesByTypeAndCurrency("regular", "PLN")).thenReturn(regularPLN);
+
+        when(this.valueRateService.findValueRateByHoursAndRatesId(5, regularPLN)).thenReturn(valueRate);
+
+        mockMvc.perform(get("/vehicles/{regNumber}?currency=PLN", REG_NUMBER))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.regNumber").value(REG_NUMBER))
+                .andExpect(jsonPath("$.bill").value(valueRate.getValue())).andExpect(jsonPath("$.regNumber").value(REG_NUMBER))
+                .andExpect(jsonPath("$.paid").value(false))
+                .andExpect(jsonPath("$.payDate").isEmpty())
+                .andDo(print());
 
     }
 

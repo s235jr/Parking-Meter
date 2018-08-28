@@ -17,13 +17,13 @@ public class VehicleServiceImpl implements VehicleService {
     }
 
     @Override
-    public List<Vehicle> findVehiclesByIsPaidFalse() {
-        return repository.findVehiclesByIsPaidFalse();
+    public List<Vehicle> findVehiclesByPaidFalse() {
+        return repository.findVehiclesByPaidFalse();
     }
 
     @Override
-    public Optional<Vehicle> findVehicleByRegNumberAndIsPaidFalse(String regNumber) {
-        return repository.findVehicleByRegNumberAndIsPaidFalse(regNumber);
+    public Optional<Vehicle> findVehicleByRegNumberAndPaidFalse(String regNumber) {
+        return repository.findVehicleByRegNumberAndPaidFalse(regNumber);
     }
 
     @Override

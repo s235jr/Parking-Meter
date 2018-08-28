@@ -10,9 +10,9 @@ import java.util.Optional;
 @Repository
 public interface VehicleService {
 
-    List<Vehicle> findVehiclesByIsPaidFalse();
+    List<Vehicle> findVehiclesByPaidFalse();
 
-    Optional<Vehicle> findVehicleByRegNumberAndIsPaidFalse(String regNumber);
+    Optional<Vehicle> findVehicleByRegNumberAndPaidFalse(String regNumber);
 
     List<Vehicle> findVehiclesByPayDateBetween(LocalDateTime start, LocalDateTime end);
 

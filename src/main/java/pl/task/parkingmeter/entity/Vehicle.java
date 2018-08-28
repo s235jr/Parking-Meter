@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 @Entity
@@ -14,19 +13,14 @@ public class Vehicle {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
-    @Column(name = "regnumber")
     private String regNumber;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
-    @Column(name = "createddate")
-    private LocalDateTime createdDate;
+    private LocalDateTime runDate;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
-    @Column(name = "paydate")
     private LocalDateTime payDate;
     private BigDecimal bill;
-    @Column(name = "disabledowner")
-    private boolean isOwnerDisabled;
-    @Column(name = "paid")
-    private boolean isPaid;
+    private boolean ownerDisabled;
+    private boolean paid;
 
     public Vehicle (String regNumber) {
         this.regNumber = regNumber;
@@ -51,12 +45,12 @@ public class Vehicle {
         this.regNumber = regNumber;
     }
 
-    public LocalDateTime getCreatedDate() {
-        return createdDate;
+    public LocalDateTime getRunDate() {
+        return runDate;
     }
 
-    public void setCreatedDate(LocalDateTime createdDate) {
-        this.createdDate = createdDate;
+    public void setRunDate(LocalDateTime runDate) {
+        this.runDate = runDate;
     }
 
     public LocalDateTime getPayDate() {
@@ -76,19 +70,19 @@ public class Vehicle {
     }
 
     public boolean isOwnerDisabled() {
-        return isOwnerDisabled;
+        return ownerDisabled;
     }
 
     public void setOwnerDisabled(boolean ownerDisabled) {
-        isOwnerDisabled = ownerDisabled;
+        this.ownerDisabled = ownerDisabled;
     }
 
     public boolean isPaid() {
-        return isPaid;
+        return paid;
     }
 
     public void setIsPaid(boolean idPaid) {
-        this.isPaid = idPaid;
+        this.paid = idPaid;
     }
 
     @Override
@@ -96,11 +90,11 @@ public class Vehicle {
         return "Vehicle{" +
                 "id=" + id +
                 ", regNumber='" + regNumber + '\'' +
-                ", createdDate=" + createdDate +
+                ", runDate=" + runDate +
                 ", payDate=" + payDate +
                 ", bill=" + bill +
-                ", isOwnerDisabled=" + isOwnerDisabled +
-                ", isPaid=" + isPaid +
+                ", ownerDisabled=" + ownerDisabled +
+                ", paid=" + paid +
                 '}';
     }
 }
