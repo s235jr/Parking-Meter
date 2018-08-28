@@ -3,8 +3,10 @@ package pl.task.parkingmeter.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import pl.task.parkingmeter.entity.Profit;
 import pl.task.parkingmeter.entity.Rates;
 import pl.task.parkingmeter.entity.Vehicle;
+import pl.task.parkingmeter.exception.InvalidDateException;
 import pl.task.parkingmeter.exception.InvalidRegNumberException;
 import pl.task.parkingmeter.exception.VehicleAddedEarlierException;
 import pl.task.parkingmeter.exception.VehicleNotFoundException;
@@ -16,6 +18,7 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -68,7 +71,7 @@ public class VehicleController {
                 .orElseThrow(() -> new VehicleNotFoundException(validRegNumber));
 
         if (vehicle != null) {
-
+            vehicle.setCurrency(currency);
             vehicle.setBill(getValueToPay(currency, vehicle));
         }
 
@@ -84,49 +87,61 @@ public class VehicleController {
 
         if (vehicle != null) {
             vehicle.setPayDate(LocalDateTime.now());
+            vehicle.setCurrency(currency);
             vehicle.setBill(getValueToPay(currency, vehicle));
-            vehicle.setIsPaid(true);
+            vehicle.setPaid(true);
             vehicleService.addVehicle(vehicle);
         }
 
         return vehicle;
     }
 
-    //
-//    @PutMapping("/{date}")
-//    public Profit checkProfit(@PathVariable String date) throws RuntimeException {
-//        return countProfitForDate(date);
-//    }
-//
-//    private Profit countProfitForDate(@PathVariable String date) {
-//        Profit profit = new Profit();
-//        String regex = "([2][0-9]{3})-([0][1-9]|[1][0-2])-([0-2][0-9]|[3][0-1])";
-//        Pattern pattern = Pattern.compile(regex);
-//        Matcher matcher = pattern.matcher(date);
-//        if (matcher.matches()) {
-//            String[] parsedDate = date.split("-");
-//
-//            LocalDateTime startDate = LocalDateTime
-//                    .of(Integer.valueOf(parsedDate[0]), Integer.valueOf(parsedDate[1]), Integer.valueOf(parsedDate[2]), 0, 0, 0);
-//
-//            LocalDateTime endDate = LocalDateTime
-//                    .of(Integer.valueOf(parsedDate[0]), Integer.valueOf(parsedDate[1]), Integer.valueOf(parsedDate[2]), 23, 59, 59);
-//
-//            List<Vehicle> vehicleByPayDate = vehicleService.findVehiclesByPayDateBetween(startDate, endDate);
-//            profit.setDate(startDate.toLocalDate());
-//            if (!vehicleByPayDate.isEmpty() || vehicleByPayDate != null) {
-//                BigDecimal dailyProfit = BigDecimal.valueOf(0);
-//                for (Vehicle vehicle : vehicleByPayDate) {
-//                    dailyProfit = dailyProfit.add(vehicle.getBill());
-//                }
-//                profit.setValue(dailyProfit);
-//            }
-//        } else {
-//            throw new InvalidDateException(date);
-//        }
-//        return profit;
-//    }
-//
+    @PutMapping("/{date}")
+    public List<Profit> checkProfit(@PathVariable String date) throws RuntimeException {
+        return countProfitForDate(date);
+    }
+
+    private List<Profit> countProfitForDate(@PathVariable String date) {
+
+        List<Profit> listOfProfit = new ArrayList<>();
+        String regex = "([2][0-9]{3})-([0][1-9]|[1][0-2])-([0-2][0-9]|[3][0-1])";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(date);
+
+        if (matcher.matches()) {
+
+            String[] parsedDate = date.split("-");
+
+            LocalDateTime startDate = LocalDateTime
+                    .of(Integer.valueOf(parsedDate[0]), Integer.valueOf(parsedDate[1]), Integer.valueOf(parsedDate[2]), 0, 0, 0);
+
+            LocalDateTime endDate = LocalDateTime
+                    .of(Integer.valueOf(parsedDate[0]), Integer.valueOf(parsedDate[1]), Integer.valueOf(parsedDate[2]), 23, 59, 59);
+
+            List<String> allCurrency = vehicleService.getAllCurrency();
+
+            for (String currency : allCurrency) {
+
+                Profit profit = new Profit();
+                profit.setDate(startDate.toLocalDate());
+                profit.setCurrency(currency);
+                profit.setValue(BigDecimal.valueOf(0));
+
+                List<Vehicle> vehicles = vehicleService.findVehiclesByPayDateBetweenAndCurrency(startDate, endDate, currency);
+
+                if (!vehicles.isEmpty() || vehicles != null) {
+                    for (Vehicle vehicle : vehicles) {
+                        profit.setValue(profit.getValue().add(vehicle.getBill()));
+                    }
+                }
+                listOfProfit.add(profit);
+            }
+        } else {
+            throw new InvalidDateException(date);
+        }
+        return listOfProfit;
+    }
+
     private String checkRegNumber(String regNumber) {
 
         regNumber = regNumber.replaceAll(" ", "").toUpperCase();

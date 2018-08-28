@@ -19,6 +19,7 @@ public class Vehicle {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime payDate;
     private BigDecimal bill;
+    private String currency;
     private boolean ownerDisabled;
     private boolean paid;
 
@@ -69,6 +70,14 @@ public class Vehicle {
         this.bill = bill;
     }
 
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
+    }
+
     public boolean isOwnerDisabled() {
         return ownerDisabled;
     }
@@ -81,8 +90,8 @@ public class Vehicle {
         return paid;
     }
 
-    public void setIsPaid(boolean idPaid) {
-        this.paid = idPaid;
+    public void setPaid(boolean paid) {
+        this.paid = paid;
     }
 
     @Override
@@ -93,6 +102,7 @@ public class Vehicle {
                 ", runDate=" + runDate +
                 ", payDate=" + payDate +
                 ", bill=" + bill +
+                ", currency='" + currency + '\'' +
                 ", ownerDisabled=" + ownerDisabled +
                 ", paid=" + paid +
                 '}';

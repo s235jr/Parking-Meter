@@ -14,9 +14,12 @@ public interface VehicleService {
 
     Optional<Vehicle> findVehicleByRegNumberAndPaidFalse(String regNumber);
 
-    List<Vehicle> findVehiclesByPayDateBetween(LocalDateTime start, LocalDateTime end);
+    List<Vehicle> findVehiclesByPayDateBetweenAndCurrency(LocalDateTime start, LocalDateTime end, String currency);
 
     Vehicle addVehicle(Vehicle vehicle);
+
+    List<String> getAllCurrency();
+
 
 
 }

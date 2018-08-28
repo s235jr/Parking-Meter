@@ -27,12 +27,19 @@ public class VehicleServiceImpl implements VehicleService {
     }
 
     @Override
-    public List<Vehicle> findVehiclesByPayDateBetween(LocalDateTime start, LocalDateTime end) {
-        return repository.findVehiclesByPayDateBetween(start, end);
+    public List<Vehicle> findVehiclesByPayDateBetweenAndCurrency(LocalDateTime start, LocalDateTime end, String currency) {
+        return repository.findVehiclesByPayDateBetweenAndCurrency(start, end, currency);
     }
 
     @Override
     public Vehicle addVehicle(Vehicle vehicle) {
         return repository.save(vehicle);
     }
+
+    @Override
+    public List<String> getAllCurrency() {
+        return repository.getAllCurrency();
+    }
+
+
 }

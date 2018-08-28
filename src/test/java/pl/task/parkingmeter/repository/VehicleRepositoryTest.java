@@ -33,20 +33,24 @@ public class VehicleRepositoryTest {
         Vehicle vehicleRegular = new Vehicle();
         vehicleRegular.setRegNumber(REG_NUMBER_FOR_REGULAR);
         vehicleRegular.setOwnerDisabled(false);
+        vehicleRegular.setCurrency("PLN");
+
         LocalDateTime localDateTime = LocalDateTime.of(2018, 8, 20, 7, 0, 0);
         vehicleRegular.setPayDate(localDateTime);
         entityManager.persist(vehicleRegular);
 
         Vehicle vehiclePaidEarlier = new Vehicle();
         vehiclePaidEarlier.setRegNumber(REG_NUMBER_FOR_PAID_EARLIER);
-        vehiclePaidEarlier.setIsPaid(true);
+        vehiclePaidEarlier.setPaid(true);
+        vehiclePaidEarlier.setCurrency("PLN");
         localDateTime = LocalDateTime.of(2018, 8, 21, 7, 0, 0);
         vehiclePaidEarlier.setPayDate(localDateTime);
         entityManager.persist(vehiclePaidEarlier);
 
         Vehicle vehicleWithDisabledOwner = new Vehicle();
         vehicleWithDisabledOwner.setRegNumber(REG_NUMBER_FOR_DISABLED);
-        vehicleWithDisabledOwner.setIsPaid(false);
+        vehicleWithDisabledOwner.setPaid(false);
+        vehicleWithDisabledOwner.setCurrency("PLN");
         vehicleWithDisabledOwner.setOwnerDisabled(true);
         localDateTime = LocalDateTime.of(2018, 8, 22, 7, 0, 0);
         vehicleWithDisabledOwner.setPayDate(localDateTime);
@@ -78,7 +82,7 @@ public class VehicleRepositoryTest {
 
         LocalDateTime start = LocalDateTime.of(2018, 8, 20, 0, 0, 0);
         LocalDateTime end = LocalDateTime.of(2018, 8, 23, 23, 59, 59);
-        List<Vehicle> result = vehicleRepository.findVehiclesByPayDateBetween(start, end);
+        List<Vehicle> result = vehicleRepository.findVehiclesByPayDateBetweenAndCurrency(start, end, "PLN");
 
         assertEquals(3, result.size());
         assertEquals(REG_NUMBER_FOR_REGULAR, result.get(0).getRegNumber());
@@ -86,9 +90,8 @@ public class VehicleRepositoryTest {
         assertEquals(REG_NUMBER_FOR_DISABLED, result.get(2).getRegNumber());
 
         end = LocalDateTime.of(2018, 8, 20, 6, 59, 59);
-        result = vehicleRepository.findVehiclesByPayDateBetween(start, end);
+        result = vehicleRepository.findVehiclesByPayDateBetweenAndCurrency(start, end, "PLN");
         assertEquals(0, result.size());
     }
-
 
 }

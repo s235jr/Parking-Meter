@@ -25,10 +25,9 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -151,7 +150,7 @@ public class VehicleControllerTest {
         vehicle.setRegNumber(REG_NUMBER);
         vehicle.setRunDate(LocalDateTime.now().minusHours(4).minusMinutes(30));
         vehicle.setOwnerDisabled(false);
-        vehicle.setIsPaid(false);
+        vehicle.setPaid(false);
 
         Rates regularPLN = new Rates();
         regularPLN.setCurrency("PLN");
@@ -174,6 +173,43 @@ public class VehicleControllerTest {
                 .andExpect(jsonPath("$.regNumber").value(REG_NUMBER))
                 .andExpect(jsonPath("$.bill").value(valueRate.getValue())).andExpect(jsonPath("$.regNumber").value(REG_NUMBER))
                 .andExpect(jsonPath("$.paid").value(false))
+                .andExpect(jsonPath("$.currency").value("PLN"))
+                .andExpect(jsonPath("$.payDate").isEmpty())
+                .andDo(print());
+
+    }
+
+    @Test
+    public void getInfoAboutVehicleWhenOkAndCurrencyIsEUR() throws Exception {
+
+        Vehicle vehicle = new Vehicle();
+        vehicle.setRegNumber(REG_NUMBER);
+        vehicle.setRunDate(LocalDateTime.now().minusHours(4).minusMinutes(30));
+        vehicle.setOwnerDisabled(false);
+        vehicle.setPaid(false);
+
+        Rates regularEUR = new Rates();
+        regularEUR.setCurrency("EUR");
+        regularEUR.setType("regular");
+
+        ValueRate valueRate = new ValueRate();
+        valueRate.setRates(regularEUR);
+        valueRate.setHours(5);
+        valueRate.setValue(BigDecimal.valueOf(12.25));
+        valueRate.setRates(regularEUR);
+
+        when(this.vehicleService.findVehicleByRegNumberAndPaidFalse(REG_NUMBER)).thenReturn(java.util.Optional.ofNullable(vehicle));
+
+        when(this.ratesService.findRatesByTypeAndCurrency("regular", "EUR")).thenReturn(regularEUR);
+
+        when(this.valueRateService.findValueRateByHoursAndRatesId(5, regularEUR)).thenReturn(valueRate);
+
+        mockMvc.perform(get("/vehicles/{regNumber}?currency=EUR", REG_NUMBER))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.regNumber").value(REG_NUMBER))
+                .andExpect(jsonPath("$.bill").value(valueRate.getValue())).andExpect(jsonPath("$.regNumber").value(REG_NUMBER))
+                .andExpect(jsonPath("$.paid").value(false))
+                .andExpect(jsonPath("$.currency").value("EUR"))
                 .andExpect(jsonPath("$.payDate").isEmpty())
                 .andDo(print());
 
@@ -210,7 +246,7 @@ public class VehicleControllerTest {
         vehicle.setRegNumber(REG_NUMBER);
         vehicle.setRunDate(LocalDateTime.now().minusHours(4).minusMinutes(30));
         vehicle.setOwnerDisabled(false);
-        vehicle.setIsPaid(false);
+        vehicle.setPaid(false);
 
         Rates regularPLN = new Rates();
         regularPLN.setCurrency("PLN");
@@ -244,7 +280,7 @@ public class VehicleControllerTest {
         vehicle.setRegNumber(REG_NUMBER);
         vehicle.setRunDate(LocalDateTime.now().minusHours(4).minusMinutes(30));
         vehicle.setOwnerDisabled(false);
-        vehicle.setIsPaid(false);
+        vehicle.setPaid(false);
 
         Rates regularPLN = new Rates();
         regularPLN.setCurrency("EUR");
@@ -282,8 +318,64 @@ public class VehicleControllerTest {
                 .andDo(print());
     }
 
+    @Test
+    public void checkProfit() throws Exception {
 
+        String date = "2018-08-28";
+        LocalDateTime startDate = LocalDateTime.of(2018, 8, 28, 0, 0, 0);
+        LocalDateTime endDate = LocalDateTime.of(2018, 8, 28, 23, 59, 59);
 
+        Vehicle firstVehicle = new Vehicle();
+        firstVehicle.setRegNumber(REG_NUMBER);
+        firstVehicle.setPayDate(LocalDateTime.of(2018, 8, 28, 11, 11, 11));
+        firstVehicle.setCurrency("PLN");
+        firstVehicle.setBill(BigDecimal.valueOf(25));
 
+        Vehicle secondVehicle = new Vehicle();
+        secondVehicle.setRegNumber(REG_NUMBER);
+        secondVehicle.setPayDate(LocalDateTime.of(2018, 8, 28, 5, 5, 5));
+        secondVehicle.setCurrency("EUR");
+        secondVehicle.setBill(BigDecimal.valueOf(5));
+
+        Vehicle thirdVehicle = new Vehicle();
+        thirdVehicle.setRegNumber(REG_NUMBER);
+        thirdVehicle.setPayDate(LocalDateTime.of(2018, 8, 28, 3, 5, 7));
+        thirdVehicle.setCurrency("PLN");
+        thirdVehicle.setBill(BigDecimal.valueOf(15));
+
+        List<String> listOfCurrency = Arrays.asList("PLN", "EUR", "USD");
+        List<Vehicle> listVehiclePaidByPLN = Arrays.asList(firstVehicle, thirdVehicle);
+        List<Vehicle> listVehiclePaidByEUR = Arrays.asList(secondVehicle);
+        List<Vehicle> listVehiclePaidByUSD = Arrays.asList();
+
+        when(this.vehicleService.getAllCurrency()).thenReturn(listOfCurrency);
+        when(this.vehicleService.findVehiclesByPayDateBetweenAndCurrency(startDate, endDate, "PLN")).thenReturn(listVehiclePaidByPLN);
+        when(this.vehicleService.findVehiclesByPayDateBetweenAndCurrency(startDate, endDate, "EUR")).thenReturn(listVehiclePaidByEUR);
+        when(this.vehicleService.findVehiclesByPayDateBetweenAndCurrency(startDate, endDate, "USD")).thenReturn(listVehiclePaidByUSD);
+
+        mockMvc.perform(put("/vehicles/{date}", date))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(contentType))
+                .andExpect(jsonPath("$", hasSize(3)))
+                .andExpect(jsonPath("$[0].value").value(40))
+                .andExpect(jsonPath("$[0].currency").value("PLN"))
+                .andExpect(jsonPath("$[1].value").value(5))
+                .andExpect(jsonPath("$[1].currency").value("EUR"))
+                .andExpect(jsonPath("$[2].value").value(0))
+                .andExpect(jsonPath("$[2].currency").value("USD"))
+                .andDo(print());
+    }
+
+    @Test
+    public void checkProfitButInvalidDateFormat() throws Exception {
+
+        String date = "2018-38-28";
+
+        mockMvc.perform(put("/vehicles/{date}", date))
+                .andExpect(status().is4xxClientError())
+                .andExpect(status().reason("Invalid date format!"))
+                .andDo(print());
+
+    }
 
 }
