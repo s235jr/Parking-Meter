@@ -78,7 +78,6 @@ public class VehicleController {
         return vehicle;
     }
 
-
     @DeleteMapping("/{regNumber}")
     public Vehicle pay(@PathVariable String regNumber, @RequestParam(required = false, defaultValue = "PLN") String currency) {
 
@@ -169,10 +168,12 @@ public class VehicleController {
 
         long hours = checkHours(vehicle.getRunDate());
         BigDecimal valueToPay;
+
         if (hours > 24) {
             valueToPay = BigDecimal.valueOf(5000);
         } else {
             String type;
+
             if (vehicle.isOwnerDisabled()) {
                 type = "disabled";
             } else {

@@ -23,5 +23,4 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
     List<String> getAllCurrency();
 
 
-
 }

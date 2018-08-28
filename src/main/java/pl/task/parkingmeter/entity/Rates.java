@@ -1,12 +1,9 @@
 package pl.task.parkingmeter.entity;
 
-import org.springframework.stereotype.Component;
-
-import javax.persistence.*;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
 
 @Entity
 public class Rates {

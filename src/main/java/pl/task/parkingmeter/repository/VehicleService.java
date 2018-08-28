@@ -21,5 +21,4 @@ public interface VehicleService {
     List<String> getAllCurrency();
 
 
-
 }

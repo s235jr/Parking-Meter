@@ -23,7 +23,7 @@ public class Vehicle {
     private boolean ownerDisabled;
     private boolean paid;
 
-    public Vehicle (String regNumber) {
+    public Vehicle(String regNumber) {
         this.regNumber = regNumber;
     }
 
