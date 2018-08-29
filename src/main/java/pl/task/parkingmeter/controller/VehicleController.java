@@ -28,9 +28,15 @@ import java.util.regex.Pattern;
 @EnableWebMvc
 public class VehicleController {
 
-    private VehicleService vehicleService;
-    private RatesService ratesService;
-    private ValueRateService valueRateService;
+    private final VehicleService vehicleService;
+    private final RatesService ratesService;
+    private final ValueRateService valueRateService;
+
+    private final String DATE_REGEX = "([2][0-9]{3})-([0][1-9]|[1][0-2])-([0-2][0-9]|[3][0-1])";
+    private final String REGNUMBER_REGEX = "[A-Z0-9]{3,}";
+
+    private final Pattern PATTERN_DATE = Pattern.compile(DATE_REGEX);
+    private final Pattern PATTERN_REGNUMBER = Pattern.compile(REGNUMBER_REGEX);
 
     @Autowired
     public VehicleController(VehicleService vehicleService, RatesService ratesService, ValueRateService valueRateService) {
@@ -103,50 +109,59 @@ public class VehicleController {
     private List<Profit> countProfitForDate(@PathVariable String date) {
 
         List<Profit> listOfProfit = new ArrayList<>();
-        String regex = "([2][0-9]{3})-([0][1-9]|[1][0-2])-([0-2][0-9]|[3][0-1])";
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(date);
+        Matcher matcher = PATTERN_DATE.matcher(date);
 
         if (matcher.matches()) {
 
-            String[] parsedDate = date.split("-");
-
-            LocalDateTime startDate = LocalDateTime
-                    .of(Integer.valueOf(parsedDate[0]), Integer.valueOf(parsedDate[1]), Integer.valueOf(parsedDate[2]), 0, 0, 0);
-
-            LocalDateTime endDate = LocalDateTime
-                    .of(Integer.valueOf(parsedDate[0]), Integer.valueOf(parsedDate[1]), Integer.valueOf(parsedDate[2]), 23, 59, 59);
-
+            LocalDateTime[] dates = returnStartAndEndDate(date);
             List<String> allCurrency = vehicleService.getAllCurrency();
 
-            for (String currency : allCurrency) {
-
+            allCurrency.stream().forEach(currency -> {
                 Profit profit = new Profit();
-                profit.setDate(startDate.toLocalDate());
+                profit.setDate(dates[1].toLocalDate());
                 profit.setCurrency(currency);
-                profit.setValue(BigDecimal.valueOf(0));
+                profit.setValue(countProfitForCurrency(dates, currency));
+                listOfProfit.add(profit);});
 
-                List<Vehicle> vehicles = vehicleService.findVehiclesByPayDateBetweenAndCurrency(startDate, endDate, currency);
-
-                if (!vehicles.isEmpty() || vehicles != null) {
-                    for (Vehicle vehicle : vehicles) {
-                        profit.setValue(profit.getValue().add(vehicle.getBill()));
-                    }
-                }
-                listOfProfit.add(profit);
-            }
         } else {
             throw new InvalidDateException(date);
         }
         return listOfProfit;
     }
 
+    private BigDecimal countProfitForCurrency(LocalDateTime[] dates, String currency) {
+
+        List<Vehicle> vehicles = vehicleService.findVehiclesByPayDateBetweenAndCurrency(dates[0], dates[1], currency);
+        BigDecimal profit = new BigDecimal(0);
+
+        if (!vehicles.isEmpty() || vehicles != null) {
+            for (Vehicle vehicle : vehicles) {
+                profit = profit.add(vehicle.getBill());
+            }
+        }
+        return profit;
+    }
+
+    private LocalDateTime[] returnStartAndEndDate(String date) {
+
+        LocalDateTime[] dates = new LocalDateTime[2];
+
+        String[] parsedDate = date.split("-");
+
+        dates[0] = LocalDateTime
+                .of(Integer.valueOf(parsedDate[0]), Integer.valueOf(parsedDate[1]), Integer.valueOf(parsedDate[2]), 0, 0, 0);
+
+        dates[1] = LocalDateTime
+                .of(Integer.valueOf(parsedDate[0]), Integer.valueOf(parsedDate[1]), Integer.valueOf(parsedDate[2]), 23, 59, 59);
+
+        return dates;
+    }
+
     private String checkRegNumber(String regNumber) {
 
         regNumber = regNumber.replaceAll(" ", "").toUpperCase();
-        String regex = "[A-Z0-9]{3,}";
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(regNumber);
+
+        Matcher matcher = PATTERN_REGNUMBER.matcher(regNumber);
 
         if (matcher.matches()) {
             return regNumber;

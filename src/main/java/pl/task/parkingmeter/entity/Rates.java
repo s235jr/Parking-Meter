@@ -1,11 +1,18 @@
 package pl.task.parkingmeter.entity;
 
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
 @Entity
+@Getter
+@Setter
+@ToString
 public class Rates {
 
     @Id
@@ -14,36 +21,4 @@ public class Rates {
     private String currency;
     private String type;
 
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public String getCurrency() {
-        return currency;
-    }
-
-    public void setCurrency(String currency) {
-        this.currency = currency;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    @Override
-    public String toString() {
-        return "Rates{" +
-                "id=" + id +
-                ", currency='" + currency + '\'' +
-                ", type='" + type + '\'' +
-                '}';
-    }
 }

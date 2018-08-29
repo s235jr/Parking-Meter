@@ -1,9 +1,16 @@
 package pl.task.parkingmeter.entity;
 
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+
 import javax.persistence.*;
 import java.math.BigDecimal;
 
 @Entity
+@Getter
+@Setter
+@ToString
 public class ValueRate {
 
     @Id
@@ -14,45 +21,4 @@ public class ValueRate {
     @ManyToOne
     private Rates rates;
 
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public long getHours() {
-        return hours;
-    }
-
-    public void setHours(long hours) {
-        this.hours = hours;
-    }
-
-    public BigDecimal getValue() {
-        return value;
-    }
-
-    public void setValue(BigDecimal value) {
-        this.value = value;
-    }
-
-    public Rates getRates() {
-        return rates;
-    }
-
-    public void setRates(Rates rates) {
-        this.rates = rates;
-    }
-
-    @Override
-    public String toString() {
-        return "ValueRate{" +
-                "id=" + id +
-                ", hours=" + hours +
-                ", value=" + value +
-                ", rates=" + rates +
-                '}';
-    }
 }

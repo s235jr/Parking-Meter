@@ -1,12 +1,18 @@
 package pl.task.parkingmeter.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
+@Getter
+@Setter
+@ToString
 @Table(name = "vehicles")
 public class Vehicle {
 
@@ -30,81 +36,4 @@ public class Vehicle {
     public Vehicle() {
     }
 
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public String getRegNumber() {
-        return regNumber;
-    }
-
-    public void setRegNumber(String regNumber) {
-        this.regNumber = regNumber;
-    }
-
-    public LocalDateTime getRunDate() {
-        return runDate;
-    }
-
-    public void setRunDate(LocalDateTime runDate) {
-        this.runDate = runDate;
-    }
-
-    public LocalDateTime getPayDate() {
-        return payDate;
-    }
-
-    public void setPayDate(LocalDateTime payDate) {
-        this.payDate = payDate;
-    }
-
-    public BigDecimal getBill() {
-        return bill;
-    }
-
-    public void setBill(BigDecimal bill) {
-        this.bill = bill;
-    }
-
-    public String getCurrency() {
-        return currency;
-    }
-
-    public void setCurrency(String currency) {
-        this.currency = currency;
-    }
-
-    public boolean isOwnerDisabled() {
-        return ownerDisabled;
-    }
-
-    public void setOwnerDisabled(boolean ownerDisabled) {
-        this.ownerDisabled = ownerDisabled;
-    }
-
-    public boolean isPaid() {
-        return paid;
-    }
-
-    public void setPaid(boolean paid) {
-        this.paid = paid;
-    }
-
-    @Override
-    public String toString() {
-        return "Vehicle{" +
-                "id=" + id +
-                ", regNumber='" + regNumber + '\'' +
-                ", runDate=" + runDate +
-                ", payDate=" + payDate +
-                ", bill=" + bill +
-                ", currency='" + currency + '\'' +
-                ", ownerDisabled=" + ownerDisabled +
-                ", paid=" + paid +
-                '}';
-    }
 }
