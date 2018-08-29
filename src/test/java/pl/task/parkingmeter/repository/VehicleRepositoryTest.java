@@ -30,6 +30,7 @@ public class VehicleRepositoryTest {
 
     @Before
     public void setup() {
+
         Vehicle vehicleRegular = new Vehicle();
         vehicleRegular.setRegNumber(REG_NUMBER_FOR_REGULAR);
         vehicleRegular.setOwnerDisabled(false);
@@ -67,10 +68,15 @@ public class VehicleRepositoryTest {
     }
 
     @Test
-    public void findVehicleByRegNumberAndIsPaidFalse() {
+    public void findVehicleByRegNumberAndIsPaidFalseTestOne() {
 
         Optional<Vehicle> resultForRegular = vehicleRepository.findVehicleByRegNumberAndPaidFalse(REG_NUMBER_FOR_REGULAR);
         assertEquals(REG_NUMBER_FOR_REGULAR, resultForRegular.get().getRegNumber());
+
+    }
+
+    @Test
+    public void findVehicleByRegNumberAndIsPaidFalseTestTwo() {
 
         Optional<Vehicle> resultForPaidEarlier = vehicleRepository.findVehicleByRegNumberAndPaidFalse(REG_NUMBER_FOR_PAID_EARLIER);
         assertEquals("Optional.empty", resultForPaidEarlier.toString());
@@ -78,7 +84,7 @@ public class VehicleRepositoryTest {
     }
 
     @Test
-    public void findVehiclesByPayDateBetween() {
+    public void findVehiclesByPayDateBetweenTestOne() {
 
         LocalDateTime start = LocalDateTime.of(2018, 8, 20, 0, 0, 0);
         LocalDateTime end = LocalDateTime.of(2018, 8, 23, 23, 59, 59);
@@ -89,8 +95,15 @@ public class VehicleRepositoryTest {
         assertEquals(REG_NUMBER_FOR_PAID_EARLIER, result.get(1).getRegNumber());
         assertEquals(REG_NUMBER_FOR_DISABLED, result.get(2).getRegNumber());
 
-        end = LocalDateTime.of(2018, 8, 20, 6, 59, 59);
-        result = vehicleRepository.findVehiclesByPayDateBetweenAndCurrency(start, end, "PLN");
+    }
+
+    @Test
+    public void findVehiclesByPayDateBetweenTestTwo() {
+
+        LocalDateTime start = LocalDateTime.of(2018, 8, 20, 0, 0, 0);
+        LocalDateTime end = LocalDateTime.of(2018, 8, 20, 6, 59, 59);
+
+        List<Vehicle> result = vehicleRepository.findVehiclesByPayDateBetweenAndCurrency(start, end, "PLN");
         assertEquals(0, result.size());
     }
 

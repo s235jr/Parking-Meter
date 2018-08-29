@@ -1,5 +1,6 @@
 package pl.task.parkingmeter.repository;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,12 @@ import static org.junit.Assert.assertEquals;
 @DataJpaTest
 public class ValueRateRepositoryTest {
 
+    private final Rates REGULAR_RATE = new Rates();
+    private final Rates DISABLED_RATE = new Rates();
+
+    private final ValueRate VALUE_RATE_1 = new ValueRate();
+    private final ValueRate VALUE_RATE_2 = new ValueRate();
+
     @Autowired
     private TestEntityManager entityManager;
 
@@ -26,41 +33,49 @@ public class ValueRateRepositoryTest {
     @Autowired
     private RatesRepository ratesRepository;
 
+    @Before
+    public void setup() {
+
+        REGULAR_RATE.setCurrency("PLN");
+        REGULAR_RATE.setType("regular");
+        entityManager.persist(REGULAR_RATE);
+
+        DISABLED_RATE.setCurrency("PLN");
+        DISABLED_RATE.setType("disabled");
+        entityManager.persist(DISABLED_RATE);
+
+        VALUE_RATE_1.setRates(REGULAR_RATE);
+        VALUE_RATE_1.setHours(5);
+        VALUE_RATE_1.setValue(BigDecimal.valueOf(17.25));
+        entityManager.persist(VALUE_RATE_1);
+
+        VALUE_RATE_2.setRates(DISABLED_RATE);
+        VALUE_RATE_2.setHours(12);
+        VALUE_RATE_2.setValue(BigDecimal.valueOf(64.30));
+        entityManager.persist(VALUE_RATE_2);
+
+    }
+
     @Test
-    public void findValueRateByHoursAndRates() {
-
-        Rates regularPLN = new Rates();
-        regularPLN.setCurrency("PLN");
-        regularPLN.setType("regular");
-        entityManager.persist(regularPLN);
-
-        Rates disabledPLN = new Rates();
-        disabledPLN.setCurrency("PLN");
-        disabledPLN.setType("disabled");
-        entityManager.persist(disabledPLN);
-
-        ValueRate valueRateFirst = new ValueRate();
-        valueRateFirst.setRates(regularPLN);
-        valueRateFirst.setHours(5);
-        valueRateFirst.setValue(BigDecimal.valueOf(17.25));
-        entityManager.persist(valueRateFirst);
-
-        ValueRate valueRateSecond = new ValueRate();
-        valueRateSecond.setRates(disabledPLN);
-        valueRateSecond.setHours(12);
-        valueRateSecond.setValue(BigDecimal.valueOf(64.30));
-        entityManager.persist(valueRateSecond);
+    public void findValueRateByHoursAndRatesTestONE() {
 
         Rates ratesFirst = ratesRepository.findByTypeAndCurrency("regular", "PLN");
-        Rates ratesSecond = ratesRepository.findByTypeAndCurrency("disabled", "PLN");
 
         ValueRate resultFirst = valueRateRepository.findValueRateByHoursAndRates(5, ratesFirst);
-        assertEquals(resultFirst.getValue(), valueRateFirst.getValue());
-        assertEquals(resultFirst.getHours(), valueRateFirst.getHours());
+
+        assertEquals(resultFirst.getValue(), VALUE_RATE_1.getValue());
+        assertEquals(resultFirst.getHours(), VALUE_RATE_1.getHours());
+
+    }
+
+    @Test
+    public void findValueRateByHoursAndRatesTestTWO() {
+
+        Rates ratesSecond = ratesRepository.findByTypeAndCurrency("disabled", "PLN");
 
         ValueRate resultSecond = valueRateRepository.findValueRateByHoursAndRates(12, ratesSecond);
-        assertEquals(resultSecond.getValue(), valueRateSecond.getValue());
-        assertEquals(resultSecond.getHours(), valueRateSecond.getHours());
 
+        assertEquals(resultSecond.getValue(), VALUE_RATE_2.getValue());
+        assertEquals(resultSecond.getHours(), VALUE_RATE_2.getHours());
     }
 }
