@@ -6,9 +6,9 @@ pipeline {
         echo 'first msg'
       }
     }
-    stage('hjghjg') {
+    stage('checkout') {
       steps {
-        build 'test'
+        powershell 'mvn test'
       }
     }
   }
