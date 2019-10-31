@@ -6,5 +6,10 @@ pipeline {
         echo 'first msg'
       }
     }
+    stage('hjghjg') {
+      steps {
+        build 'test'
+      }
+    }
   }
 }
